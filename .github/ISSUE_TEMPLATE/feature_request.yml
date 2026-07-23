@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a defensive, evidence-led capability
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What authorized user problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the result without prescribing implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and data considerations
+      description: Note privacy, permission, tenant isolation, or misuse concerns.
+    validations:
+      required: true

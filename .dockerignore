@@ -1,0 +1,13 @@
+.git
+.github
+.env
+work
+outputs
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/node_modules
+frontend/dist
+frontend/coverage
+*.log
