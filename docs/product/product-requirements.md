@@ -3,8 +3,8 @@
 ## Document status
 
 - Product: Avenward
-- Version: `0.0.1`
-- Status: approved foundation scope
+- Version: `0.1.0`
+- Status: implemented local event explorer scope
 - Updated: 2026-07-23
 
 ## Vision
@@ -96,3 +96,11 @@ The MVP will be evaluated by installation success, time to first imported event,
 search latency on documented synthetic datasets, detection false-positive rate,
 alert volume, task completion, accessibility checks, and user comprehension.
 No scale or accuracy claim will be made without a reproducible benchmark.
+
+## Event explorer scope (`0.1.0`)
+
+The first usable vertical slice provides a development-only account and one
+organization, revocable opaque sessions, organization-scoped persistence,
+generic file preview/import, deterministic synthetic evidence, normalized event
+search, overview counts, and event detail. Uploads are bounded to 2 MB and 5,000
+records, require UTF-8 CSV/JSON/JSONL, and are parsed strictly as inert data.

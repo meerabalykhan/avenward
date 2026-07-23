@@ -4,14 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "avenward-backend"
-version = "0.0.1"
+version = "0.1.0"
 description = "Avenward defensive security and operations API"
 requires-python = ">=3.12,<3.14"
 license = { text = "Apache-2.0" }
 dependencies = [
+  "alembic>=1.16,<2",
   "asyncpg>=0.30,<1",
+  "email-validator>=2.2,<3",
   "fastapi>=0.116,<1",
   "pydantic-settings>=2.10,<3",
+  "python-multipart>=0.0.20,<1",
   "redis>=6.2,<7",
   "sqlalchemy[asyncio]>=2.0,<3",
   "uvicorn[standard]>=0.35,<1",
@@ -37,6 +40,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+omit = ["app/seed.py"]
 
 [tool.ruff]
 line-length = 100
@@ -46,7 +50,7 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
+"tests/**/*.py" = ["S101", "S106"]
 
 [tool.mypy]
 python_version = "3.12"

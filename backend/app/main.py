@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title="Avenward API",
         description="Defensive security and operations platform API",
-        version="0.0.1",
+        version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
@@ -37,8 +37,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET"],
-        allow_headers=["Content-Type", "X-Request-ID"],
+        allow_methods=["GET", "POST", "DELETE"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     )
     application.include_router(api_router, prefix="/api/v1")
     return application

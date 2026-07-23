@@ -35,7 +35,7 @@ async def test_version_returns_public_metadata(client: AsyncClient) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "name": "avenward",
-        "version": "0.0.1",
+        "version": "0.1.0",
         "environment": "development",
     }
 

@@ -11,6 +11,15 @@ case "$action" in
     docker compose up --build
     ;;
   down) docker compose down ;;
+  format)
+    docker run --rm -v "$project_root/backend:/workspace" -w /workspace \
+      python:3.12-slim sh -c \
+      "pip install -e '.[dev]' && ruff format . && ruff check . --fix"
+    docker run --rm -e CI=true -v "$project_root/frontend:/workspace" \
+      -w /workspace node:22-alpine sh -c \
+      "corepack enable && pnpm install --no-frozen-lockfile \
+       --store-dir /tmp/pnpm-store && pnpm format:write"
+    ;;
   test)
     docker run --rm -v "$project_root/backend:/workspace" -w /workspace \
       python:3.12-slim sh -c "pip install -e '.[dev]' && pytest"
@@ -31,5 +40,5 @@ case "$action" in
        pnpm exec tsc -b || failures=1; pnpm test || failures=1; \
        pnpm build || failures=1; exit \$failures"
     ;;
-  *) echo "Usage: $0 {up|down|test|check}" >&2; exit 2 ;;
+  *) echo "Usage: $0 {up|down|format|test|check}" >&2; exit 2 ;;
 esac

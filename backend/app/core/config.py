@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     readiness_timeout_seconds: float = Field(default=2.0, gt=0, le=10)
+    session_hours: int = Field(default=12, ge=1, le=168)
+    upload_max_bytes: int = Field(default=2_000_000, ge=1024, le=10_000_000)
+    demo_email: str = "analyst@example.com"
+    demo_password: str = Field(default="avenward-demo-only")
 
 
 @lru_cache

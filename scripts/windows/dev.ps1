@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('up', 'down', 'check', 'test', 'frontend-test')]
+    [ValidateSet('up', 'down', 'format', 'check', 'test', 'frontend-test')]
     [string]$Action = 'up'
 )
 
@@ -21,6 +21,18 @@ try {
             docker compose up --build
         }
         'down' { docker compose down }
+        'format' {
+            docker run --rm --volume "$ProjectRoot\backend:/workspace" --workdir /workspace `
+                python:3.12-slim sh -c "pip install -e '.[dev]' && ruff format . && ruff check . --fix"
+            Confirm-NativeCommand
+            $frontendFormat = 'corepack enable ' +
+                '&& pnpm install --no-frozen-lockfile --store-dir /tmp/pnpm-store ' +
+                '&& pnpm format:write'
+            docker run --rm --env CI=true `
+                --volume "$ProjectRoot\frontend:/workspace" --workdir /workspace `
+                node:22-alpine sh -c $frontendFormat
+            Confirm-NativeCommand
+        }
         'test' {
             $frontendTest = 'corepack enable ' +
                 '&& pnpm install --no-frozen-lockfile --store-dir /tmp/pnpm-store ' +

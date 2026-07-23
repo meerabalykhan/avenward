@@ -1,5 +1,18 @@
 # Known limitations
 
+## Version 0.1.0
+
+- Authentication is a local demonstration identity, not production SSO, MFA,
+  recovery, invitation, or account administration.
+- The example password is intentionally public and the stack must stay on
+  localhost. Change `.env` values before any extended local evaluation.
+- Import runs within the API request and is limited to 2 MB / 5,000 records;
+  background ingestion is planned before larger datasets.
+- Search uses bounded relational matching, not a dedicated search engine.
+- The demo generator is deterministic but its timestamps are based on seed time.
+- No detections, alerts, incidents, collectors, anomaly models, or AI explanations
+  exist yet. Confidence is supplied evidence metadata, not an AI score.
+
 Version `0.0.1` is a development foundation, not a usable monitoring product.
 
 ## Product limitations

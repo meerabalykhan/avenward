@@ -3,8 +3,7 @@
 ## Context
 
 Avenward is a browser-based, self-hosted defensive monitoring platform. Version
-`0.0.1` establishes a modular monolith and its deployment boundary; it does not
-yet process security events.
+`0.1.0` adds the first tenant-scoped event workflow to the modular monolith.
 
 ## Container view
 
@@ -61,8 +60,10 @@ and schemas do not contain provider-specific network calls.
 - short raw-event retention by default, specified before ingestion ships
 - no premature partitioning; add it only after measured query and ingest tests
 
-No application tables or migrations exist in `0.0.1`; database schema design and
-Alembic initialization are the first `0.1.0` change.
+Alembic owns schema history. Organizations, users, revocable sessions, and
+canonical events are durable PostgreSQL records. Every event query includes the
+authenticated user's `organization_id`; raw source fields are retained in JSONB
+but are neither searched by default nor written to operational logs.
 
 ## AI boundary
 

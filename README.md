@@ -7,20 +7,24 @@ searching, and interpreting security and operational data. It is designed for
 small teams, students, and authorized laboratories that need an understandable
 foundation for SOC and NOC workflows without an enterprise platform.
 
-> **Status:** `0.0.1` foundation. Avenward is not production-ready and must not
+> **Status:** `0.1.0` local event explorer. Avenward is not production-ready and must not
 > be exposed to the public internet.
 
 ## What exists today
 
 - FastAPI backend with health, readiness, and version endpoints
-- React and TypeScript landing shell
+- Local demo authentication with revocable opaque sessions
+- Organization-scoped PostgreSQL persistence and Alembic migrations
+- Safe CSV, JSON, and JSONL preview/import (2 MB and 5,000-event limits)
+- Canonical event search, overview, detail, and deterministic synthetic data
+- React and TypeScript analyst workspace
 - PostgreSQL and Redis development services
 - Docker Compose development workflow
 - Backend and frontend tests, linting, formatting, and type checks
 - Product, architecture, security, roadmap, limitation, and decision documents
 
-Event ingestion, authentication, detection, alerts, incidents, and AI-assisted
-analysis are roadmap work and are not represented as complete.
+Detection rules, alerts, incidents, real collectors, and AI-assisted analysis are
+roadmap work and are not represented as complete.
 
 ## Quick start
 
@@ -36,6 +40,11 @@ Open:
 - Application: <http://localhost:8080>
 - Backend API documentation: <http://localhost:8000/docs>
 - Backend health: <http://localhost:8000/api/v1/health>
+
+The local demonstration account is configured in `.env`. The example values are
+`analyst@example.com` and `avenward-demo-only`; change them before importing
+anything beyond the deterministic synthetic demo. Previewing does not persist a
+file. Only **Confirm import** writes validated, normalized events.
 
 Stop the stack with `docker compose down`. The PostgreSQL data is retained in a
 named volume. Use `docker compose down --volumes` only when intentionally
