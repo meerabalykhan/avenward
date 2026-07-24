@@ -16,6 +16,40 @@ const event = {
   confidence: 87,
   summary: 'Synthetic evidence for testing.',
 }
+const alert = {
+  id: '9b287670-67e5-4c3a-af18-7ea0731cc7ab',
+  status: 'open',
+  severity: 'high',
+  title: 'Repeated authentication failures',
+  summary: 'Rule matched three events for demo-user-1.',
+  group_key: 'demo-user-1',
+  rule_version: 1,
+  event_count: 3,
+  first_seen_at: '2026-07-23T09:50:00Z',
+  last_seen_at: '2026-07-23T10:00:00Z',
+}
+const rule = {
+  id: '621994f5-7db0-474a-8ab4-c0446e6950ae',
+  slug: 'repeated-authentication-failure',
+  name: 'Repeated authentication failures',
+  description: 'Three authentication failure events for one actor within 15 minutes.',
+  version: 1,
+  enabled: true,
+  severity: 'high',
+  definition: { threshold: 3, window_seconds: 900, group_by: 'actor' },
+}
+const alertDetail = {
+  ...alert,
+  rule,
+  evidence: [
+    {
+      id: event.id,
+      title: event.title,
+      source: event.source,
+      observed_at: event.observed_at,
+    },
+  ],
+}
 
 function response(data: unknown, ok = true, status = 200) {
   return Promise.resolve({ ok, status, json: () => Promise.resolve(data) })
@@ -33,6 +67,12 @@ function workspaceFetch() {
         organization: 'Avenward Lab',
       })
     if (url.endsWith('/events/overview')) return response({ total: 1, by_severity: { high: 1 } })
+    if (url.includes('/alerts?'))
+      return response({ items: [alert], page: 1, page_size: 12, total: 1 })
+    if (url.endsWith('/rules')) return response([rule])
+    if (url.includes('/alerts/') && url.endsWith('/status'))
+      return response({ ...alert, status: 'acknowledged' })
+    if (url.includes('/alerts/')) return response(alertDetail)
     if (url.includes('/events?'))
       return response({ items: [event], page: 1, page_size: 12, total: 13 })
     if (url.endsWith('/events/preview')) return response({ count: 1, sample: [event] })
@@ -58,6 +98,8 @@ describe('Avenward event explorer', () => {
     await screen.findByRole('heading', { name: 'Event explorer' })
     expect(await screen.findByText('Demo Analyst')).toBeInTheDocument()
     expect(screen.getByText('Repeated authentication failure')).toBeInTheDocument()
+    expect(screen.getAllByText('Repeated authentication failures').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Three authentication failure events/)).toBeInTheDocument()
 
     await user.click(screen.getByText('Repeated authentication failure'))
     expect(screen.getByText('Synthetic evidence for testing.')).toBeInTheDocument()
@@ -65,6 +107,29 @@ describe('Avenward event explorer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Sign out' }))
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+  })
+
+  it('explains and acknowledges a deduplicated alert without changing evidence', async () => {
+    sessionStorage.setItem('avenward_session', 'existing-token')
+    const fetchMock = workspaceFetch()
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+    render(<App />)
+
+    const alertButtons = await screen.findAllByRole('button', {
+      name: /Repeated authentication failures/,
+    })
+    await user.click(alertButtons[0]!)
+    expect(screen.getByText('Rule matched three events for demo-user-1.')).toBeInTheDocument()
+    expect(screen.getByText('Supporting evidence')).toBeInTheDocument()
+    expect(screen.getByText(/never alter or delete the underlying evidence/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Mark acknowledged' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/alerts/9b287670-67e5-4c3a-af18-7ea0731cc7ab/status'),
+        expect.objectContaining({ method: 'PATCH' }),
+      ),
+    )
   })
 
   it('shows a safe authentication failure', async () => {

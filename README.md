@@ -7,7 +7,8 @@ searching, and interpreting security and operational data. It is designed for
 small teams, students, and authorized laboratories that need an understandable
 foundation for SOC and NOC workflows without an enterprise platform.
 
-> **Status:** `0.1.0` local event explorer. Avenward is not production-ready and must not
+> **Status:** `0.2.0` detection workspace under active development. Avenward is not
+> production-ready and must not
 > be exposed to the public internet.
 
 ## What exists today
@@ -17,13 +18,17 @@ foundation for SOC and NOC workflows without an enterprise platform.
 - Organization-scoped PostgreSQL persistence and Alembic migrations
 - Safe CSV, JSON, and JSONL preview/import (2 MB and 5,000-event limits)
 - Canonical event search, overview, detail, and deterministic synthetic data
+- Database-backed authenticated webhook ingestion worker
+- Versioned declarative authentication and availability rules
+- Evidence-preserving alert creation, deduplication, state, list, and rationale views
 - React and TypeScript analyst workspace
 - PostgreSQL and Redis development services
 - Docker Compose development workflow
 - Backend and frontend tests, linting, formatting, and type checks
 - Product, architecture, security, roadmap, limitation, and decision documents
 
-Detection rules, alerts, incidents, real collectors, and AI-assisted analysis are
+Additional rules, incidents, endpoint collectors, vulnerability findings,
+security-control integrations, response playbooks, and AI-assisted analysis are
 roadmap work and are not represented as complete.
 
 ## Quick start
@@ -68,7 +73,9 @@ See [development roadmap](docs/development/development-roadmap.md),
 
 - Use synthetic data only during development.
 - Never commit `.env`, passwords, tokens, workplace logs, or customer data.
-- Avenward is defensive software; it does not perform autonomous remediation.
+- Avenward is defensive software. The `1.0.0` roadmap permits only narrowly
+  allowlisted, reversible, human-approved response actions; autonomous
+  destructive remediation and offensive exploitation remain out of scope.
 - Report suspected vulnerabilities using [SECURITY.md](SECURITY.md).
 
 ## Contributing

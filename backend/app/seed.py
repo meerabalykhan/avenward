@@ -7,8 +7,8 @@ from sqlalchemy import func, select
 
 from app.core.config import get_settings
 from app.db import SessionFactory, engine
-from app.models import Event, Organization, User
-from app.security import hash_password
+from app.models import DetectionRule, Event, IngestionSource, Organization, User
+from app.security import hash_password, token_digest
 
 
 async def seed() -> None:
@@ -70,6 +70,65 @@ async def seed() -> None:
                         raw=raw,
                     )
                 )
+        source = await db.scalar(
+            select(IngestionSource).where(
+                IngestionSource.organization_id == organization.id,
+                IngestionSource.name == "Local webhook",
+            )
+        )
+        if source is None:
+            db.add(
+                IngestionSource(
+                    organization_id=organization.id,
+                    name="Local webhook",
+                    token_hash=token_digest(settings.demo_ingest_key),
+                    enabled=True,
+                )
+            )
+        rule_count = await db.scalar(
+            select(func.count())
+            .select_from(DetectionRule)
+            .where(DetectionRule.organization_id == organization.id)
+        )
+        if not rule_count:
+            db.add_all(
+                [
+                    DetectionRule(
+                        organization_id=organization.id,
+                        slug="repeated-authentication-failure",
+                        name="Repeated authentication failures",
+                        description=(
+                            "Three authentication failure events for one actor within 15 minutes."
+                        ),
+                        version=1,
+                        enabled=True,
+                        severity="high",
+                        conditions=[
+                            {"field": "category", "operator": "equals", "value": "authentication"},
+                            {"field": "title", "operator": "contains", "value": "failure"},
+                        ],
+                        group_by="actor",
+                        threshold=3,
+                        window_seconds=900,
+                    ),
+                    DetectionRule(
+                        organization_id=organization.id,
+                        slug="service-offline",
+                        name="Service or asset reported offline",
+                        description="An availability event reports an offline service or asset.",
+                        version=1,
+                        enabled=True,
+                        severity="high",
+                        conditions=[
+                            {"field": "category", "operator": "equals", "value": "availability"},
+                            {"field": "title", "operator": "contains", "value": "offline"},
+                        ],
+                        group_by="target",
+                        threshold=1,
+                        window_seconds=300,
+                    ),
+                ]
+            )
         await db.commit()
     await engine.dispose()
 

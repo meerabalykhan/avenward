@@ -10,6 +10,7 @@ from sqlalchemy import func, or_, select
 
 from app.api.v1.auth import CurrentUser, DatabaseSession
 from app.core.config import get_settings
+from app.detections import evaluate_event
 from app.events import NormalizedEvent, normalize_record, records_from_upload
 from app.models import Event
 
@@ -75,9 +76,11 @@ async def import_events(
     db: DatabaseSession,
 ) -> dict[str, int]:
     events = normalize_all(await read_upload(upload))
-    db.add_all(
-        [Event(organization_id=user.organization_id, **event.model_dump()) for event in events]
-    )
+    for normalized in events:
+        event = Event(organization_id=user.organization_id, **normalized.model_dump())
+        db.add(event)
+        await db.flush()
+        await evaluate_event(db, event)
     await db.commit()
     return {"imported": len(events)}
 

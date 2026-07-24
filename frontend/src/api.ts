@@ -14,6 +14,33 @@ export type EventRecord = {
 export type EventPage = { items: EventRecord[]; page: number; page_size: number; total: number }
 export type Overview = { total: number; by_severity: Record<string, number> }
 export type User = { email: string; display_name: string; role: string; organization: string }
+export type RuleRecord = {
+  id: string
+  slug: string
+  name: string
+  description: string
+  version: number
+  enabled: boolean
+  severity: string
+  definition: { threshold: number; window_seconds: number; group_by: string | null }
+}
+export type AlertRecord = {
+  id: string
+  status: 'open' | 'acknowledged' | 'resolved'
+  severity: string
+  title: string
+  summary: string
+  group_key: string
+  rule_version: number
+  event_count: number
+  first_seen_at: string
+  last_seen_at: string
+}
+export type AlertPage = { items: AlertRecord[]; page: number; page_size: number; total: number }
+export type AlertDetail = AlertRecord & {
+  rule: RuleRecord
+  evidence: Array<{ id: string; title: string; source: string; observed_at: string }>
+}
 
 async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -38,6 +65,15 @@ export async function login(email: string, password: string) {
 
 export const getMe = (token: string) => request<User>('/auth/me', token)
 export const getOverview = (token: string) => request<Overview>('/events/overview', token)
+export const getRules = (token: string) => request<RuleRecord[]>('/rules', token)
+export const getAlerts = (token: string) => request<AlertPage>('/alerts?page=1&page_size=12', token)
+export const getAlertDetail = (token: string, alertId: string) =>
+  request<AlertDetail>(`/alerts/${alertId}`, token)
+export const changeAlertStatus = (token: string, alertId: string, status: AlertRecord['status']) =>
+  request<AlertRecord>(`/alerts/${alertId}/status`, token, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
 export const getEvents = (token: string, query: string, severity: string, page: number) => {
   const params = new URLSearchParams({ page: String(page), page_size: '12' })
   if (query) params.set('q', query)

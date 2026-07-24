@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     readiness_timeout_seconds: float = Field(default=2.0, gt=0, le=10)
     session_hours: int = Field(default=12, ge=1, le=168)
     upload_max_bytes: int = Field(default=2_000_000, ge=1024, le=10_000_000)
+    webhook_max_events: int = Field(default=500, ge=1, le=5000)
+    demo_ingest_key: str = Field(default="avenward-demo-ingest-key", min_length=16, max_length=128)
+    worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=30)
     demo_email: str = "analyst@example.com"
     demo_password: str = Field(default="avenward-demo-only")
 

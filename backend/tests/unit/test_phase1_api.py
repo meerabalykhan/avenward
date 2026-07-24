@@ -61,6 +61,7 @@ def database() -> Mock:
     db.execute = AsyncMock()
     db.get = AsyncMock()
     db.commit = AsyncMock()
+    db.flush = AsyncMock()
     return db
 
 
@@ -151,7 +152,8 @@ async def test_import_search_overview_and_detail_are_tenant_scoped() -> None:
     )
     imported = await import_events(valid, user, db)
     assert imported == {"imported": 1}
-    db.add_all.assert_called_once()
+    db.add.assert_called_once()
+    db.flush.assert_awaited_once()
     db.commit.assert_awaited_once()
 
     db.scalar.return_value = 1

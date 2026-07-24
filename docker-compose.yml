@@ -40,6 +40,7 @@ services:
       AVENWARD_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-avenward}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-avenward}
       AVENWARD_REDIS_URL: redis://redis:6379/0
       AVENWARD_CORS_ORIGINS: '["http://localhost:5173","http://localhost:8080"]'
+      AVENWARD_DEMO_INGEST_KEY: ${AVENWARD_DEMO_INGEST_KEY:-avenward-demo-ingest-key}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -58,6 +59,23 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    networks: [internal]
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["python", "-m", "app.worker"]
+    environment:
+      AVENWARD_ENVIRONMENT: ${AVENWARD_ENVIRONMENT:-development}
+      AVENWARD_LOG_LEVEL: ${AVENWARD_LOG_LEVEL:-INFO}
+      AVENWARD_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-avenward}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-avenward}
+      AVENWARD_REDIS_URL: redis://redis:6379/0
+      AVENWARD_DEMO_INGEST_KEY: ${AVENWARD_DEMO_INGEST_KEY:-avenward-demo-ingest-key}
+    depends_on:
+      backend:
+        condition: service_healthy
     networks: [internal]
     restart: unless-stopped
 

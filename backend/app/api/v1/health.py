@@ -9,7 +9,7 @@ from app.core.dependencies import check_postgres, check_redis, run_probe
 from app.schemas import HealthResponse, ReadinessResponse, VersionResponse
 
 router = APIRouter(tags=["system"])
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 
 
 @router.get("/health", response_model=HealthResponse)

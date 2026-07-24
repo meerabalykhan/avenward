@@ -232,7 +232,7 @@ button:disabled {
 }
 .metric-grid {
   display: grid;
-  grid-template-columns: 1.35fr repeat(4, 1fr);
+  grid-template-columns: 1.35fr repeat(5, 1fr);
   margin-bottom: 1.5rem;
   border: 1px solid var(--line);
 }
@@ -370,6 +370,68 @@ button:disabled {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.panel-note {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.empty-list {
+  padding: 2rem;
+}
+.alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+.alert-actions button {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+.alert-evidence {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.alert-evidence span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+.rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.rule-grid article {
+  min-height: 220px;
+  padding: 1.5rem;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.rule-grid article:nth-child(even) {
+  border-right: 0;
+}
+.rule-grid h3 {
+  margin: 1.2rem 0 0.8rem;
+  font-size: 1.45rem;
+}
+.rule-grid p,
+.rule-grid small {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.severity-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.severity-text-high,
+.severity-text-critical {
+  color: #e29a78;
+}
 .import-panel {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -428,7 +490,8 @@ button:disabled {
     grid-template-columns: repeat(2, 1fr);
   }
   .event-layout,
-  .import-panel {
+  .import-panel,
+  .rule-grid {
     grid-template-columns: 1fr;
   }
   .event-list {

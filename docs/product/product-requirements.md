@@ -69,6 +69,31 @@ organization, synthetic CSV/JSON import, normalized event storage, event search,
 event detail, and a basic overview dashboard. Later releases add detections,
 incidents, metrics, anomaly analysis, grounded explanations, and reports.
 
+The `1.0.0` target also includes bounded real-ingestion paths, asset and endpoint
+visibility, imported vulnerability findings, production identity basics,
+security-control integrations, and recommendation-first response playbooks.
+Specialist enforcement engines remain separate trust boundaries: Avenward may
+integrate endpoint protection, firewalls, and vulnerability scanners without
+misrepresenting itself as a complete native replacement for each one.
+
+## Version 1.0 product promise
+
+Avenward `1.0.0` is intended to help lean internal teams and service providers:
+
+1. Collect authorized security and operational evidence from supported sources.
+2. Normalize and search events, assets, metrics, and vulnerability findings.
+3. Produce transparent rule alerts and explainable anomaly findings.
+4. Investigate incidents with ownership, timelines, evidence, and audit history.
+5. Use grounded explanations without making AI the detection authority.
+6. Notify, report, and perform only explicitly approved, reversible response
+   actions through configured adapters.
+7. Operate a documented self-hosted deployment with backup, restore, upgrades,
+   retention controls, and customer-safe diagnostics.
+
+The product remains defensive. It does not provide autonomous exploitation,
+arbitrary remote command execution, destructive remediation, unreviewed AI
+decisions, or a promise to replace accountable human analysts.
+
 ## Non-functional requirements
 
 - Organization-owned queries must be scoped by `organization_id`.

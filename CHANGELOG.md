@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0] - 2026-07-24
+
+### Added
+
+- Authenticated, bounded webhook ingestion backed by durable database jobs
+- Background worker for normalization and deterministic rule evaluation
+- Versioned, declarative detection rules with restricted fields and operators
+- Tenant-scoped, evidence-backed alert creation and time-bucket deduplication
+- Alert rationale, supporting evidence, and open/acknowledged/resolved workflow
+- Phase 2 migration, validation guide, and expanded defensive platform roadmap
+
+### Security
+
+- Ingestion credentials are stored as SHA-256 digests
+- Malformed batches fail without partially importing evidence
+- Rules are interpreted as bounded data and cannot execute user-supplied code
+- Alert state transitions preserve their original evidence and rule version
+
 ## [0.1.0] - 2026-07-23
 
 ### Added
