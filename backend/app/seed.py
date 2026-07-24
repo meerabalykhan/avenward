@@ -7,7 +7,18 @@ from sqlalchemy import func, select
 
 from app.core.config import get_settings
 from app.db import SessionFactory, engine
-from app.models import DetectionRule, Event, IngestionSource, Organization, User
+from app.models import (
+    AuditRecord,
+    DetectionRule,
+    Event,
+    IngestionSource,
+    Investigation,
+    InvestigationComment,
+    InvestigationLink,
+    Organization,
+    User,
+    VulnerabilityFinding,
+)
 from app.security import hash_password, token_digest
 
 
@@ -25,15 +36,15 @@ async def seed() -> None:
             await db.flush()
         user = await db.scalar(select(User).where(User.email == settings.demo_email.lower()))
         if user is None:
-            db.add(
-                User(
-                    organization_id=organization.id,
-                    email=settings.demo_email.lower(),
-                    display_name="Demo Analyst",
-                    password_hash=hash_password(settings.demo_password),
-                    role="admin",
-                )
+            user = User(
+                organization_id=organization.id,
+                email=settings.demo_email.lower(),
+                display_name="Demo Analyst",
+                password_hash=hash_password(settings.demo_password),
+                role="admin",
             )
+            db.add(user)
+            await db.flush()
         count = await db.scalar(
             select(func.count()).select_from(Event).where(Event.organization_id == organization.id)
         )
@@ -126,6 +137,86 @@ async def seed() -> None:
                         group_by="target",
                         threshold=1,
                         window_seconds=300,
+                    ),
+                ]
+            )
+        finding = await db.scalar(
+            select(VulnerabilityFinding).where(
+                VulnerabilityFinding.organization_id == organization.id,
+                VulnerabilityFinding.source == "synthetic-scanner",
+                VulnerabilityFinding.external_id == "AVEN-DEMO-001",
+            )
+        )
+        if finding is None:
+            now = datetime.now(UTC).replace(microsecond=0)
+            finding = VulnerabilityFinding(
+                organization_id=organization.id,
+                source="synthetic-scanner",
+                external_id="AVEN-DEMO-001",
+                asset_identifier="lab-web-01",
+                title="Outdated demonstration web component",
+                severity="high",
+                cvss_score_tenths=81,
+                cve="CVE-2025-0001",
+                description=(
+                    "Synthetic scanner output indicating an outdated component in the lab."
+                ),
+                remediation=(
+                    "Verify the installed version, test the supported update, and deploy it "
+                    "through the organization's approved change process."
+                ),
+                evidence={"synthetic": True, "scanner_plugin": "demo-001"},
+                status="open",
+                exception_reason=None,
+                first_seen_at=now - timedelta(days=2),
+                last_seen_at=now,
+            )
+            db.add(finding)
+            await db.flush()
+        investigation = await db.scalar(
+            select(Investigation).where(
+                Investigation.organization_id == organization.id,
+                Investigation.title == "Review lab web exposure",
+            )
+        )
+        if investigation is None:
+            investigation = Investigation(
+                organization_id=organization.id,
+                title="Review lab web exposure",
+                summary=(
+                    "Confirm the synthetic vulnerability finding, determine ownership, and "
+                    "document the approved remediation path."
+                ),
+                severity="high",
+                status="open",
+                owner_id=user.id,
+                resolution=None,
+                created_by_id=user.id,
+            )
+            db.add(investigation)
+            await db.flush()
+            db.add_all(
+                [
+                    InvestigationLink(
+                        organization_id=organization.id,
+                        investigation_id=investigation.id,
+                        entity_type="finding",
+                        entity_id=finding.id,
+                        created_by_id=user.id,
+                    ),
+                    InvestigationComment(
+                        organization_id=organization.id,
+                        investigation_id=investigation.id,
+                        author_id=user.id,
+                        body="Synthetic case created for the Phase 3 investigation workflow.",
+                    ),
+                    AuditRecord(
+                        organization_id=organization.id,
+                        actor_id=user.id,
+                        entity_type="investigation",
+                        entity_id=investigation.id,
+                        action="investigation.created",
+                        details={"synthetic": True},
                     ),
                 ]
             )

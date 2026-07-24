@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0] - 2026-07-24
+
+### Added
+
+- Imported vulnerability findings with assets, CVSS metadata, evidence, and guidance
+- Investigation creation, ownership, evidence linking, comments, and resolution
+- Append-only audit history for finding and investigation changes
+- Investigation and vulnerability workflows in the analyst workspace
+- Phase 3 database migration, synthetic case, tests, and validation guide
+
+### Security
+
+- Finding imports enforce bounded records, text, CVSS values, timestamps, and evidence size
+- Evidence links and owners must belong to the active organization
+- Resolution requires an explicit analyst record and never alters linked evidence
+- Imported scanner content is stored and displayed as untrusted data, never executed
+
 ## [0.2.0] - 2026-07-24
 
 ### Added

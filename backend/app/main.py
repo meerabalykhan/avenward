@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     application = FastAPI(
         title="Avenward API",
         description="Defensive security and operations platform API",
-        version="0.2.0",
+        version="0.3.0",
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,

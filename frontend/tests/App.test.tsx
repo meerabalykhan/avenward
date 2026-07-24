@@ -50,6 +50,62 @@ const alertDetail = {
     },
   ],
 }
+const finding = {
+  id: 'da8ac937-0d30-4ced-98d6-a5c595a73cd7',
+  source: 'synthetic-scanner',
+  external_id: 'AVEN-DEMO-001',
+  asset_identifier: 'lab-web-01',
+  title: 'Outdated demonstration web component',
+  severity: 'high',
+  cvss_score: 8.1,
+  cve: 'CVE-2025-0001',
+  description: 'Synthetic scanner output.',
+  remediation: 'Test and deploy the supported update.',
+  status: 'open',
+  exception_reason: null,
+  first_seen_at: '2026-07-22T10:00:00Z',
+  last_seen_at: '2026-07-24T10:00:00Z',
+}
+const investigation = {
+  id: 'fe3e704d-069c-4cc8-aa84-f00a725250ff',
+  title: 'Review lab web exposure',
+  summary: 'Confirm the finding and document the approved remediation path.',
+  severity: 'high',
+  status: 'open',
+  owner_id: '4d94896d-2c52-4966-8d4c-f6fb4f60f133',
+  resolution: null,
+  created_at: '2026-07-24T10:00:00Z',
+  updated_at: '2026-07-24T10:00:00Z',
+}
+const investigationDetail = {
+  ...investigation,
+  links: [
+    {
+      id: 'bd719ec4-29a5-4033-b5aa-a91c148bf14e',
+      entity_type: 'finding',
+      entity_id: finding.id,
+      label: finding.title,
+      created_at: investigation.created_at,
+    },
+  ],
+  comments: [
+    {
+      id: '3ad8dbcc-14aa-43ef-8674-393815ec8109',
+      author_id: investigation.owner_id,
+      body: 'Synthetic case created for testing.',
+      created_at: investigation.created_at,
+    },
+  ],
+  audit: [
+    {
+      id: '02658298-e255-47c7-a4f2-1e09f7994be9',
+      actor_id: investigation.owner_id,
+      action: 'investigation.created',
+      details: { synthetic: true },
+      created_at: investigation.created_at,
+    },
+  ],
+}
 
 function response(data: unknown, ok = true, status = 200) {
   return Promise.resolve({ ok, status, json: () => Promise.resolve(data) })
@@ -70,6 +126,17 @@ function workspaceFetch() {
     if (url.includes('/alerts?'))
       return response({ items: [alert], page: 1, page_size: 12, total: 1 })
     if (url.endsWith('/rules')) return response([rule])
+    if (url.includes('/findings?'))
+      return response({ items: [finding], page: 1, page_size: 12, total: 1 })
+    if (url.includes('/findings/') && url.endsWith('/status'))
+      return response({ ...finding, status: 'resolved' })
+    if (url.includes('/investigations?'))
+      return response({ items: [investigation], page: 1, page_size: 12, total: 1 })
+    if (url.endsWith('/investigations')) return response(investigation, true, 201)
+    if (url.includes('/investigations/') && url.endsWith('/links')) return response({}, true, 201)
+    if (url.includes('/investigations/') && url.endsWith('/comments'))
+      return response({}, true, 201)
+    if (url.includes('/investigations/')) return response(investigationDetail)
     if (url.includes('/alerts/') && url.endsWith('/status'))
       return response({ ...alert, status: 'acknowledged' })
     if (url.includes('/alerts/')) return response(alertDetail)
@@ -145,6 +212,63 @@ describe('Avenward event explorer', () => {
     await user.type(screen.getByLabelText('Password'), 'incorrect-demo-password')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid email or password')
+  })
+
+  it('reviews findings and accountable investigation history', async () => {
+    sessionStorage.setItem('avenward_session', 'existing-token')
+    const fetchMock = workspaceFetch()
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+    render(<App />)
+
+    const caseButton = await screen.findByRole('button', { name: /Review lab web exposure/ })
+    await user.click(caseButton)
+    expect(await screen.findByText('Linked evidence')).toBeInTheDocument()
+    expect(screen.getByText('investigation.created', { exact: false })).toBeInTheDocument()
+    expect(screen.getByText('Synthetic case created for testing.')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Add analyst note'), 'Validated by the test analyst.')
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(`/investigations/${investigation.id}/comments`),
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    )
+    await user.click(screen.getByRole('button', { name: 'Start work' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(`/investigations/${investigation.id}`),
+        expect.objectContaining({ method: 'PATCH' }),
+      ),
+    )
+    await user.type(screen.getByLabelText('Resolution'), 'Synthetic update completed safely.')
+    await user.click(screen.getByRole('button', { name: 'Resolve with record' }))
+
+    const findingButton = screen.getByRole('button', {
+      name: /Outdated demonstration web component/,
+    })
+    await user.click(findingButton)
+    expect(screen.getByText('Test and deploy the supported update.')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Imported scanner content is displayed as untrusted evidence and never executed.',
+      ),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Mark resolved' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining(`/findings/${finding.id}/status`),
+        expect.objectContaining({ method: 'PATCH' }),
+      ),
+    )
+    await user.click(screen.getByRole('button', { name: 'Open investigation' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/investigations'),
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    )
   })
 
   it('searches, filters, paginates, previews, and confirms an import', async () => {

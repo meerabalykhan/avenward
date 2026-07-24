@@ -1,20 +1,32 @@
 import { useEffect, useState, type FormEvent } from 'react'
 
 import {
+  addInvestigationComment,
   changeAlertStatus,
+  changeFindingStatus,
+  createInvestigation,
   getAlertDetail,
   getAlerts,
   getEvents,
+  getFindings,
+  getInvestigationDetail,
+  getInvestigations,
   getMe,
   getOverview,
   getRules,
   importFile,
+  linkInvestigationEvidence,
   login,
   previewFile,
+  updateInvestigation,
   type AlertPage,
   type AlertDetail,
   type EventPage,
   type EventRecord,
+  type FindingPage,
+  type FindingRecord,
+  type InvestigationDetail,
+  type InvestigationPage,
   type Overview,
   type RuleRecord,
   type User,
@@ -22,6 +34,8 @@ import {
 
 const EMPTY_PAGE: EventPage = { items: [], page: 1, page_size: 12, total: 0 }
 const EMPTY_ALERTS: AlertPage = { items: [], page: 1, page_size: 12, total: 0 }
+const EMPTY_FINDINGS: FindingPage = { items: [], page: 1, page_size: 12, total: 0 }
+const EMPTY_INVESTIGATIONS: InvestigationPage = { items: [], page: 1, page_size: 12, total: 0 }
 const severityOrder = ['critical', 'high', 'medium', 'low', 'informational']
 
 function Login({ onLogin }: { onLogin: (token: string) => void }) {
@@ -51,7 +65,7 @@ function Login({ onLogin }: { onLogin: (token: string) => void }) {
           <span className="brand-mark">A</span>
           <span>Avenward</span>
         </a>
-        <p className="eyebrow">Detection workspace · 0.2.0</p>
+        <p className="eyebrow">Investigation workspace · 0.3.0</p>
         <h1>
           Evidence,
           <br />
@@ -107,6 +121,12 @@ function App() {
   const [events, setEvents] = useState<EventPage>(EMPTY_PAGE)
   const [alerts, setAlerts] = useState<AlertPage>(EMPTY_ALERTS)
   const [rules, setRules] = useState<RuleRecord[]>([])
+  const [findings, setFindings] = useState<FindingPage>(EMPTY_FINDINGS)
+  const [investigations, setInvestigations] = useState<InvestigationPage>(EMPTY_INVESTIGATIONS)
+  const [selectedFinding, setSelectedFinding] = useState<FindingRecord | null>(null)
+  const [selectedInvestigation, setSelectedInvestigation] = useState<InvestigationDetail | null>(
+    null,
+  )
   const [selectedAlert, setSelectedAlert] = useState<AlertDetail | null>(null)
   const [selected, setSelected] = useState<EventRecord | null>(null)
   const [query, setQuery] = useState('')
@@ -115,21 +135,35 @@ function App() {
   const [error, setError] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<{ count: number; sample: EventRecord[] } | null>(null)
+  const [comment, setComment] = useState('')
+  const [resolution, setResolution] = useState('')
 
   async function load(activeToken = token, activePage = page) {
     try {
-      const [identity, summary, result, alertResult, ruleResult] = await Promise.all([
+      const [
+        identity,
+        summary,
+        result,
+        alertResult,
+        ruleResult,
+        findingResult,
+        investigationResult,
+      ] = await Promise.all([
         getMe(activeToken),
         getOverview(activeToken),
         getEvents(activeToken, query, severity, activePage),
         getAlerts(activeToken),
         getRules(activeToken),
+        getFindings(activeToken),
+        getInvestigations(activeToken),
       ])
       setUser(identity)
       setOverview(summary)
       setEvents(result)
       setAlerts(alertResult)
       setRules(ruleResult)
+      setFindings(findingResult)
+      setInvestigations(investigationResult)
       setError('')
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Workspace could not be loaded')
@@ -153,6 +187,8 @@ function App() {
     setUser(null)
     setSelected(null)
     setSelectedAlert(null)
+    setSelectedFinding(null)
+    setSelectedInvestigation(null)
   }
 
   if (!token) return <Login onLogin={acceptToken} />
@@ -170,6 +206,8 @@ function App() {
           </a>
           <a href="#events">Events</a>
           <a href="#alerts">Alerts</a>
+          <a href="#investigations">Investigations</a>
+          <a href="#findings">Findings</a>
           <a href="#rules">Rules</a>
           <a href="#import">Import</a>
         </nav>
@@ -206,6 +244,16 @@ function App() {
           <article>
             <span>Open alerts</span>
             <strong>{alerts.items.filter((alert) => alert.status === 'open').length}</strong>
+          </article>
+          <article>
+            <span>Open investigations</span>
+            <strong>
+              {investigations.items.filter((item) => item.status !== 'resolved').length}
+            </strong>
+          </article>
+          <article>
+            <span>Open findings</span>
+            <strong>{findings.items.filter((item) => item.status === 'open').length}</strong>
           </article>
         </section>
         <section className="panel" id="alerts">
@@ -295,6 +343,248 @@ function App() {
                 </>
               ) : (
                 <p className="empty-state">Select an alert to inspect why it exists.</p>
+              )}
+            </aside>
+          </div>
+        </section>
+        <section className="panel" id="investigations">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Accountable casework</p>
+              <h2>Investigations</h2>
+            </div>
+            <span className="panel-note">{investigations.total} cases · append-only history</span>
+          </div>
+          <div className="event-layout case-layout">
+            <div className="event-list">
+              {investigations.items.map((item) => (
+                <button
+                  className={`event-row ${selectedInvestigation?.id === item.id ? 'selected' : ''}`}
+                  key={item.id}
+                  onClick={() =>
+                    void getInvestigationDetail(token, item.id)
+                      .then((detail) => {
+                        setSelectedInvestigation(detail)
+                        setResolution(detail.resolution ?? '')
+                      })
+                      .catch((reason: Error) => setError(reason.message))
+                  }
+                >
+                  <span className={`severity-dot severity-${item.severity}`} />
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>
+                      {item.status.replace('_', ' ')} · updated{' '}
+                      {new Date(item.updated_at).toLocaleString()}
+                    </small>
+                  </span>
+                  <b>{item.severity}</b>
+                </button>
+              ))}
+            </div>
+            <aside className="event-detail case-detail">
+              {selectedInvestigation ? (
+                <>
+                  <p className="eyebrow">Investigation record</p>
+                  <h3>{selectedInvestigation.title}</h3>
+                  <p>{selectedInvestigation.summary}</p>
+                  <dl>
+                    <dt>Status</dt>
+                    <dd>{selectedInvestigation.status.replace('_', ' ')}</dd>
+                    <dt>Evidence</dt>
+                    <dd>{selectedInvestigation.links.length} linked records</dd>
+                    <dt>Comments</dt>
+                    <dd>{selectedInvestigation.comments.length}</dd>
+                  </dl>
+                  <div className="case-timeline">
+                    <strong>Linked evidence</strong>
+                    {selectedInvestigation.links.map((link) => (
+                      <span key={link.id}>
+                        {link.entity_type} · {link.label}
+                      </span>
+                    ))}
+                    <strong>Analyst notes</strong>
+                    {selectedInvestigation.comments.map((item) => (
+                      <span key={item.id}>{item.body}</span>
+                    ))}
+                    <strong>Audit history</strong>
+                    {selectedInvestigation.audit.map((item) => (
+                      <span key={item.id}>
+                        {item.action} · {new Date(item.created_at).toLocaleString()}
+                      </span>
+                    ))}
+                  </div>
+                  <form
+                    className="case-form"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      if (!comment.trim()) return
+                      void addInvestigationComment(token, selectedInvestigation.id, comment)
+                        .then(async () => {
+                          setComment('')
+                          setSelectedInvestigation(
+                            await getInvestigationDetail(token, selectedInvestigation.id),
+                          )
+                        })
+                        .catch((reason: Error) => setError(reason.message))
+                    }}
+                  >
+                    <label>
+                      Add analyst note
+                      <textarea
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                      />
+                    </label>
+                    <button disabled={!comment.trim()}>Add note</button>
+                  </form>
+                  <div className="case-form">
+                    <label>
+                      Resolution
+                      <textarea
+                        value={resolution}
+                        onChange={(event) => setResolution(event.target.value)}
+                      />
+                    </label>
+                    <div className="alert-actions">
+                      <button
+                        disabled={selectedInvestigation.status === 'in_progress'}
+                        onClick={() =>
+                          void updateInvestigation(token, selectedInvestigation.id, {
+                            status: 'in_progress',
+                          })
+                            .then(async () => {
+                              setSelectedInvestigation(
+                                await getInvestigationDetail(token, selectedInvestigation.id),
+                              )
+                              await load()
+                            })
+                            .catch((reason: Error) => setError(reason.message))
+                        }
+                      >
+                        Start work
+                      </button>
+                      <button
+                        disabled={!resolution.trim() || selectedInvestigation.status === 'resolved'}
+                        onClick={() =>
+                          void updateInvestigation(token, selectedInvestigation.id, {
+                            status: 'resolved',
+                            resolution,
+                          })
+                            .then(async () => {
+                              setSelectedInvestigation(
+                                await getInvestigationDetail(token, selectedInvestigation.id),
+                              )
+                              await load()
+                            })
+                            .catch((reason: Error) => setError(reason.message))
+                        }
+                      >
+                        Resolve with record
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="empty-state">
+                  Select an investigation to review its complete timeline.
+                </p>
+              )}
+            </aside>
+          </div>
+        </section>
+        <section className="panel" id="findings">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Imported scanner evidence</p>
+              <h2>Vulnerability findings</h2>
+            </div>
+            <span className="panel-note">Findings are not proof of compromise</span>
+          </div>
+          <div className="event-layout">
+            <div className="event-list">
+              {findings.items.map((item) => (
+                <button
+                  className={`event-row ${selectedFinding?.id === item.id ? 'selected' : ''}`}
+                  key={item.id}
+                  onClick={() => setSelectedFinding(item)}
+                >
+                  <span className={`severity-dot severity-${item.severity}`} />
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>
+                      {item.asset_identifier} · {item.cve ?? item.external_id}
+                    </small>
+                  </span>
+                  <b>{item.status}</b>
+                </button>
+              ))}
+            </div>
+            <aside className="event-detail">
+              {selectedFinding ? (
+                <>
+                  <p className="eyebrow">Finding detail</p>
+                  <h3>{selectedFinding.title}</h3>
+                  <dl>
+                    <dt>Asset</dt>
+                    <dd>{selectedFinding.asset_identifier}</dd>
+                    <dt>Source</dt>
+                    <dd>{selectedFinding.source}</dd>
+                    <dt>CVSS</dt>
+                    <dd>{selectedFinding.cvss_score ?? 'Not supplied'}</dd>
+                    <dt>Status</dt>
+                    <dd>{selectedFinding.status}</dd>
+                  </dl>
+                  <p>{selectedFinding.description}</p>
+                  <strong>Remediation guidance</strong>
+                  <p>{selectedFinding.remediation}</p>
+                  <div className="alert-actions">
+                    <button
+                      onClick={() =>
+                        void createInvestigation(token, {
+                          title: `Review ${selectedFinding.title}`,
+                          summary: `Validate the imported finding on ${selectedFinding.asset_identifier} and document the approved response.`,
+                          severity: selectedFinding.severity,
+                        })
+                          .then(async (created) => {
+                            await linkInvestigationEvidence(
+                              token,
+                              created.id,
+                              'finding',
+                              selectedFinding.id,
+                            )
+                            await load()
+                            setSelectedInvestigation(
+                              await getInvestigationDetail(token, created.id),
+                            )
+                          })
+                          .catch((reason: Error) => setError(reason.message))
+                      }
+                    >
+                      Open investigation
+                    </button>
+                    <button
+                      disabled={selectedFinding.status === 'resolved'}
+                      onClick={() =>
+                        void changeFindingStatus(token, selectedFinding.id, 'resolved')
+                          .then(async (updated) => {
+                            setSelectedFinding(updated)
+                            await load()
+                          })
+                          .catch((reason: Error) => setError(reason.message))
+                      }
+                    >
+                      Mark resolved
+                    </button>
+                  </div>
+                  <small>
+                    Imported scanner content is displayed as untrusted evidence and never executed.
+                  </small>
+                </>
+              ) : (
+                <p className="empty-state">
+                  Select a finding to inspect its affected asset and guidance.
+                </p>
               )}
             </aside>
           </div>

@@ -400,6 +400,48 @@ button:disabled {
   font-size: 0.75rem;
   line-height: 1.45;
 }
+.case-layout {
+  grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
+}
+.case-detail {
+  max-height: 760px;
+  overflow-y: auto;
+}
+.case-timeline {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.4rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.case-timeline strong {
+  margin-top: 0.55rem;
+  color: var(--accent);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.case-timeline span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+.case-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.2rem;
+}
+.case-form label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.case-form textarea {
+  min-height: 84px;
+  resize: vertical;
+}
 .rule-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -491,7 +533,8 @@ button:disabled {
   }
   .event-layout,
   .import-panel,
-  .rule-grid {
+  .rule-grid,
+  .case-layout {
     grid-template-columns: 1fr;
   }
   .event-list {

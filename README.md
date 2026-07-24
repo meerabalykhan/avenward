@@ -7,7 +7,7 @@ searching, and interpreting security and operational data. It is designed for
 small teams, students, and authorized laboratories that need an understandable
 foundation for SOC and NOC workflows without an enterprise platform.
 
-> **Status:** `0.2.0` detection workspace under active development. Avenward is not
+> **Status:** `0.3.0` investigation workspace under active development. Avenward is not
 > production-ready and must not
 > be exposed to the public internet.
 
@@ -21,15 +21,17 @@ foundation for SOC and NOC workflows without an enterprise platform.
 - Database-backed authenticated webhook ingestion worker
 - Versioned declarative authentication and availability rules
 - Evidence-preserving alert creation, deduplication, state, list, and rationale views
+- Imported vulnerability findings with affected assets and remediation guidance
+- Investigations with linked evidence, ownership, notes, resolution, and audit history
 - React and TypeScript analyst workspace
 - PostgreSQL and Redis development services
 - Docker Compose development workflow
 - Backend and frontend tests, linting, formatting, and type checks
 - Product, architecture, security, roadmap, limitation, and decision documents
 
-Additional rules, incidents, endpoint collectors, vulnerability findings,
-security-control integrations, response playbooks, and AI-assisted analysis are
-roadmap work and are not represented as complete.
+Additional rules, endpoint collectors, native scanning, security-control integrations,
+response playbooks, and AI-assisted analysis are roadmap work and are not represented
+as complete.
 
 ## Quick start
 

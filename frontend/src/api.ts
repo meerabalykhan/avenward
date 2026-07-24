@@ -41,6 +41,57 @@ export type AlertDetail = AlertRecord & {
   rule: RuleRecord
   evidence: Array<{ id: string; title: string; source: string; observed_at: string }>
 }
+export type FindingRecord = {
+  id: string
+  source: string
+  external_id: string
+  asset_identifier: string
+  title: string
+  severity: string
+  cvss_score: number | null
+  cve: string | null
+  description: string
+  remediation: string
+  status: 'open' | 'accepted' | 'resolved'
+  exception_reason: string | null
+  first_seen_at: string
+  last_seen_at: string
+}
+export type FindingPage = { items: FindingRecord[]; page: number; page_size: number; total: number }
+export type InvestigationRecord = {
+  id: string
+  title: string
+  summary: string
+  severity: string
+  status: 'open' | 'in_progress' | 'resolved'
+  owner_id: string | null
+  resolution: string | null
+  created_at: string
+  updated_at: string
+}
+export type InvestigationPage = {
+  items: InvestigationRecord[]
+  page: number
+  page_size: number
+  total: number
+}
+export type InvestigationDetail = InvestigationRecord & {
+  links: Array<{
+    id: string
+    entity_type: string
+    entity_id: string
+    label: string
+    created_at: string
+  }>
+  comments: Array<{ id: string; author_id: string; body: string; created_at: string }>
+  audit: Array<{
+    id: string
+    actor_id: string
+    action: string
+    details: Record<string, unknown>
+    created_at: string
+  }>
+}
 
 async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -73,6 +124,54 @@ export const changeAlertStatus = (token: string, alertId: string, status: AlertR
   request<AlertRecord>(`/alerts/${alertId}/status`, token, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  })
+export const getFindings = (token: string) =>
+  request<FindingPage>('/findings?page=1&page_size=12', token)
+export const changeFindingStatus = (
+  token: string,
+  findingId: string,
+  status: FindingRecord['status'],
+  exceptionReason?: string,
+) =>
+  request<FindingRecord>(`/findings/${findingId}/status`, token, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, exception_reason: exceptionReason ?? null }),
+  })
+export const getInvestigations = (token: string) =>
+  request<InvestigationPage>('/investigations?page=1&page_size=12', token)
+export const getInvestigationDetail = (token: string, investigationId: string) =>
+  request<InvestigationDetail>(`/investigations/${investigationId}`, token)
+export const createInvestigation = (
+  token: string,
+  payload: { title: string; summary: string; severity: string },
+) =>
+  request<InvestigationRecord>('/investigations', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+export const linkInvestigationEvidence = (
+  token: string,
+  investigationId: string,
+  entityType: 'alert' | 'event' | 'finding',
+  entityId: string,
+) =>
+  request(`/investigations/${investigationId}/links`, token, {
+    method: 'POST',
+    body: JSON.stringify({ entity_type: entityType, entity_id: entityId }),
+  })
+export const updateInvestigation = (
+  token: string,
+  investigationId: string,
+  payload: { status: InvestigationRecord['status']; resolution?: string },
+) =>
+  request<InvestigationRecord>(`/investigations/${investigationId}`, token, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+export const addInvestigationComment = (token: string, investigationId: string, body: string) =>
+  request(`/investigations/${investigationId}/comments`, token, {
+    method: 'POST',
+    body: JSON.stringify({ body }),
   })
 export const getEvents = (token: string, query: string, severity: string, page: number) => {
   const params = new URLSearchParams({ page: String(page), page_size: '12' })
