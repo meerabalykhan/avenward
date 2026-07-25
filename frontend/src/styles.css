@@ -232,7 +232,7 @@ button:disabled {
 }
 .metric-grid {
   display: grid;
-  grid-template-columns: 1.35fr repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(118px, 1fr));
   margin-bottom: 1.5rem;
   border: 1px solid var(--line);
 }
@@ -404,7 +404,7 @@ button:disabled {
   grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.2fr);
 }
 .case-detail {
-  max-height: 760px;
+  max-height: 680px;
   overflow-y: auto;
 }
 .case-timeline {
@@ -426,6 +426,34 @@ button:disabled {
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.5;
+}
+.case-timeline > small {
+  color: #71837f;
+  font-size: 0.68rem;
+}
+.resolution-record {
+  padding: 0.75rem;
+  border-left: 2px solid var(--teal);
+  color: var(--ink) !important;
+  background: rgba(104, 187, 174, 0.06);
+}
+.finding-layout {
+  grid-template-columns: minmax(340px, 0.9fr) minmax(460px, 1.1fr);
+  min-height: 390px;
+}
+.detail-kicker {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+}
+.synthetic-label {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(215, 171, 104, 0.35);
+  color: var(--amber);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .case-form {
   display: grid;

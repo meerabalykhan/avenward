@@ -58,7 +58,7 @@ const finding = {
   title: 'Outdated demonstration web component',
   severity: 'high',
   cvss_score: 8.1,
-  cve: 'CVE-2025-0001',
+  cve: null,
   description: 'Synthetic scanner output.',
   remediation: 'Test and deploy the supported update.',
   status: 'open',
@@ -122,7 +122,8 @@ function workspaceFetch() {
         role: 'admin',
         organization: 'Avenward Lab',
       })
-    if (url.endsWith('/events/overview')) return response({ total: 1, by_severity: { high: 1 } })
+    if (url.endsWith('/events/overview'))
+      return response({ total: 2, by_severity: { high: 1, informational: 1 } })
     if (url.includes('/alerts?'))
       return response({ items: [alert], page: 1, page_size: 12, total: 1 })
     if (url.endsWith('/rules')) return response([rule])
@@ -164,11 +165,13 @@ describe('Avenward event explorer', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
     await screen.findByRole('heading', { name: 'Event explorer' })
     expect(await screen.findByText('Demo Analyst')).toBeInTheDocument()
-    expect(screen.getByText('Repeated authentication failure')).toBeInTheDocument()
+    const eventButton = await screen.findByTestId(`event-${event.id}`)
+    expect(eventButton).toBeInTheDocument()
     expect(screen.getAllByText('Repeated authentication failures').length).toBeGreaterThan(0)
     expect(screen.getByText(/Three authentication failure events/)).toBeInTheDocument()
+    expect(screen.getAllByText('informational').length).toBeGreaterThanOrEqual(2)
 
-    await user.click(screen.getByText('Repeated authentication failure'))
+    await user.click(eventButton)
     expect(screen.getByText('Synthetic evidence for testing.')).toBeInTheDocument()
     expect(screen.getByText(/not an AI verdict/i)).toBeInTheDocument()
 
@@ -249,6 +252,8 @@ describe('Avenward event explorer', () => {
       name: /Outdated demonstration web component/,
     })
     await user.click(findingButton)
+    expect(screen.getByText('Synthetic demonstration')).toBeInTheDocument()
+    expect(screen.getByText('AVEN-DEMO-001')).toBeInTheDocument()
     expect(screen.getByText('Test and deploy the supported update.')).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -286,6 +291,12 @@ describe('Avenward event explorer', () => {
 
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(await screen.findByText(/Page 2/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Previous' }))
+    expect(await screen.findByText(/Page 1/)).toBeInTheDocument()
+
+    const findingsNavigation = screen.getByRole('link', { name: 'Findings' })
+    await user.click(findingsNavigation)
+    expect(findingsNavigation).toHaveClass('nav-active')
 
     const file = new File([JSON.stringify(event)], 'events.json', { type: 'application/json' })
     fireEvent.change(screen.getByLabelText('Choose event file'), { target: { files: [file] } })

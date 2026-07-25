@@ -56,6 +56,12 @@ semantic versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Clarified synthetic demonstration labels and aligned finding and investigation states
+- Improved active navigation, overview severity totals, and investigation presentation
+- Corrected authentication and security limitation documentation for the `0.3.0` implementation
+
 ## [0.0.1] - 2026-07-23
 
 ### Added

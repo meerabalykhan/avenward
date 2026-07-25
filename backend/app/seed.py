@@ -157,7 +157,7 @@ async def seed() -> None:
                 title="Outdated demonstration web component",
                 severity="high",
                 cvss_score_tenths=81,
-                cve="CVE-2025-0001",
+                cve=None,
                 description=(
                     "Synthetic scanner output indicating an outdated component in the lab."
                 ),
@@ -173,6 +173,10 @@ async def seed() -> None:
             )
             db.add(finding)
             await db.flush()
+        else:
+            # Keep the bundled public-demo record unmistakably synthetic. It must
+            # never resemble an assigned CVE or imply a real vulnerable product.
+            finding.cve = None
         investigation = await db.scalar(
             select(Investigation).where(
                 Investigation.organization_id == organization.id,
@@ -220,6 +224,10 @@ async def seed() -> None:
                     ),
                 ]
             )
+        elif investigation.status == "resolved":
+            # The synthetic case and its synthetic finding describe one completed
+            # demo workflow, so their public-facing states should remain aligned.
+            finding.status = "resolved"
         await db.commit()
     await engine.dispose()
 

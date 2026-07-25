@@ -37,6 +37,15 @@ const EMPTY_ALERTS: AlertPage = { items: [], page: 1, page_size: 12, total: 0 }
 const EMPTY_FINDINGS: FindingPage = { items: [], page: 1, page_size: 12, total: 0 }
 const EMPTY_INVESTIGATIONS: InvestigationPage = { items: [], page: 1, page_size: 12, total: 0 }
 const severityOrder = ['critical', 'high', 'medium', 'low', 'informational']
+const navigationSections = [
+  ['overview', 'Overview'],
+  ['events', 'Events'],
+  ['alerts', 'Alerts'],
+  ['investigations', 'Investigations'],
+  ['findings', 'Findings'],
+  ['rules', 'Rules'],
+  ['import', 'Import'],
+] as const
 
 function Login({ onLogin }: { onLogin: (token: string) => void }) {
   const [email, setEmail] = useState('analyst@example.com')
@@ -137,6 +146,9 @@ function App() {
   const [preview, setPreview] = useState<{ count: number; sample: EventRecord[] } | null>(null)
   const [comment, setComment] = useState('')
   const [resolution, setResolution] = useState('')
+  const [activeSection, setActiveSection] = useState(() =>
+    window.location.hash ? window.location.hash.slice(1) : 'overview',
+  )
 
   async function load(activeToken = token, activePage = page) {
     try {
@@ -176,6 +188,12 @@ function App() {
     if (token) void load()
   }, [token, page, severity]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const syncSection = () => setActiveSection(window.location.hash.slice(1) || 'overview')
+    window.addEventListener('hashchange', syncSection)
+    return () => window.removeEventListener('hashchange', syncSection)
+  }, [])
+
   function acceptToken(value: string) {
     sessionStorage.setItem('avenward_session', value)
     setToken(value)
@@ -201,15 +219,16 @@ function App() {
           <span>Avenward</span>
         </a>
         <nav aria-label="Primary">
-          <a className="nav-active" href="#overview">
-            Overview
-          </a>
-          <a href="#events">Events</a>
-          <a href="#alerts">Alerts</a>
-          <a href="#investigations">Investigations</a>
-          <a href="#findings">Findings</a>
-          <a href="#rules">Rules</a>
-          <a href="#import">Import</a>
+          {navigationSections.map(([section, label]) => (
+            <a
+              className={activeSection === section ? 'nav-active' : undefined}
+              href={`#${section}`}
+              key={section}
+              onClick={() => setActiveSection(section)}
+            >
+              {label}
+            </a>
+          ))}
         </nav>
         <div className="identity">
           <strong>{user?.display_name ?? 'Loading…'}</strong>
@@ -235,7 +254,7 @@ function App() {
             <span>Normalized events</span>
             <strong>{overview.total}</strong>
           </article>
-          {severityOrder.slice(0, 4).map((level) => (
+          {severityOrder.map((level) => (
             <article key={level}>
               <span>{level}</span>
               <strong>{overview.by_severity[level] ?? 0}</strong>
@@ -408,82 +427,97 @@ function App() {
                       <span key={item.id}>{item.body}</span>
                     ))}
                     <strong>Audit history</strong>
-                    {selectedInvestigation.audit.map((item) => (
+                    <small>
+                      {selectedInvestigation.audit.length} append-only entries · latest five shown
+                    </small>
+                    {selectedInvestigation.audit.slice(-5).map((item) => (
                       <span key={item.id}>
                         {item.action} · {new Date(item.created_at).toLocaleString()}
                       </span>
                     ))}
+                    {selectedInvestigation.resolution && (
+                      <>
+                        <strong>Resolution record</strong>
+                        <span className="resolution-record">
+                          {selectedInvestigation.resolution}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <form
-                    className="case-form"
-                    onSubmit={(event) => {
-                      event.preventDefault()
-                      if (!comment.trim()) return
-                      void addInvestigationComment(token, selectedInvestigation.id, comment)
-                        .then(async () => {
-                          setComment('')
-                          setSelectedInvestigation(
-                            await getInvestigationDetail(token, selectedInvestigation.id),
-                          )
-                        })
-                        .catch((reason: Error) => setError(reason.message))
-                    }}
-                  >
-                    <label>
-                      Add analyst note
-                      <textarea
-                        value={comment}
-                        onChange={(event) => setComment(event.target.value)}
-                      />
-                    </label>
-                    <button disabled={!comment.trim()}>Add note</button>
-                  </form>
-                  <div className="case-form">
-                    <label>
-                      Resolution
-                      <textarea
-                        value={resolution}
-                        onChange={(event) => setResolution(event.target.value)}
-                      />
-                    </label>
-                    <div className="alert-actions">
-                      <button
-                        disabled={selectedInvestigation.status === 'in_progress'}
-                        onClick={() =>
-                          void updateInvestigation(token, selectedInvestigation.id, {
-                            status: 'in_progress',
-                          })
+                  {selectedInvestigation.status !== 'resolved' && (
+                    <>
+                      <form
+                        className="case-form"
+                        onSubmit={(event) => {
+                          event.preventDefault()
+                          if (!comment.trim()) return
+                          void addInvestigationComment(token, selectedInvestigation.id, comment)
                             .then(async () => {
+                              setComment('')
                               setSelectedInvestigation(
                                 await getInvestigationDetail(token, selectedInvestigation.id),
                               )
-                              await load()
                             })
                             .catch((reason: Error) => setError(reason.message))
-                        }
+                        }}
                       >
-                        Start work
-                      </button>
-                      <button
-                        disabled={!resolution.trim() || selectedInvestigation.status === 'resolved'}
-                        onClick={() =>
-                          void updateInvestigation(token, selectedInvestigation.id, {
-                            status: 'resolved',
-                            resolution,
-                          })
-                            .then(async () => {
-                              setSelectedInvestigation(
-                                await getInvestigationDetail(token, selectedInvestigation.id),
-                              )
-                              await load()
-                            })
-                            .catch((reason: Error) => setError(reason.message))
-                        }
-                      >
-                        Resolve with record
-                      </button>
-                    </div>
-                  </div>
+                        <label>
+                          Add analyst note
+                          <textarea
+                            value={comment}
+                            onChange={(event) => setComment(event.target.value)}
+                          />
+                        </label>
+                        <button disabled={!comment.trim()}>Add note</button>
+                      </form>
+                      <div className="case-form">
+                        <label>
+                          Resolution
+                          <textarea
+                            value={resolution}
+                            onChange={(event) => setResolution(event.target.value)}
+                          />
+                        </label>
+                        <div className="alert-actions">
+                          <button
+                            disabled={selectedInvestigation.status === 'in_progress'}
+                            onClick={() =>
+                              void updateInvestigation(token, selectedInvestigation.id, {
+                                status: 'in_progress',
+                              })
+                                .then(async () => {
+                                  setSelectedInvestigation(
+                                    await getInvestigationDetail(token, selectedInvestigation.id),
+                                  )
+                                  await load()
+                                })
+                                .catch((reason: Error) => setError(reason.message))
+                            }
+                          >
+                            Start work
+                          </button>
+                          <button
+                            disabled={!resolution.trim()}
+                            onClick={() =>
+                              void updateInvestigation(token, selectedInvestigation.id, {
+                                status: 'resolved',
+                                resolution,
+                              })
+                                .then(async () => {
+                                  setSelectedInvestigation(
+                                    await getInvestigationDetail(token, selectedInvestigation.id),
+                                  )
+                                  await load()
+                                })
+                                .catch((reason: Error) => setError(reason.message))
+                            }
+                          >
+                            Resolve with record
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <p className="empty-state">
@@ -501,7 +535,7 @@ function App() {
             </div>
             <span className="panel-note">Findings are not proof of compromise</span>
           </div>
-          <div className="event-layout">
+          <div className="event-layout finding-layout">
             <div className="event-list">
               {findings.items.map((item) => (
                 <button
@@ -523,13 +557,18 @@ function App() {
             <aside className="event-detail">
               {selectedFinding ? (
                 <>
-                  <p className="eyebrow">Finding detail</p>
+                  <div className="detail-kicker">
+                    <p className="eyebrow">Finding detail</p>
+                    <span className="synthetic-label">Synthetic demonstration</span>
+                  </div>
                   <h3>{selectedFinding.title}</h3>
                   <dl>
                     <dt>Asset</dt>
                     <dd>{selectedFinding.asset_identifier}</dd>
                     <dt>Source</dt>
                     <dd>{selectedFinding.source}</dd>
+                    <dt>Reference</dt>
+                    <dd>{selectedFinding.cve ?? selectedFinding.external_id}</dd>
                     <dt>CVSS</dt>
                     <dd>{selectedFinding.cvss_score ?? 'Not supplied'}</dd>
                     <dt>Status</dt>
@@ -654,6 +693,7 @@ function App() {
               {events.items.map((item) => (
                 <button
                   className={`event-row ${selected?.id === item.id ? 'selected' : ''}`}
+                  data-testid={`event-${item.id}`}
                   key={item.id}
                   onClick={() => setSelected(item)}
                 >

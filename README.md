@@ -33,6 +33,10 @@ Additional rules, endpoint collectors, native scanning, security-control integra
 response playbooks, and AI-assisted analysis are roadmap work and are not represented
 as complete.
 
+All bundled records and screenshots are synthetic demonstrations. The current
+audit history is append-only through application workflows; it is not a
+tamper-evident compliance ledger.
+
 ## Quick start
 
 Requirements: Git, Docker Desktop with WSL 2, and Docker Compose.

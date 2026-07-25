@@ -1,33 +1,41 @@
 # Known limitations
 
-## Version 0.1.0
+## Version 0.3.0
 
 - Authentication is a local demonstration identity, not production SSO, MFA,
   recovery, invitation, or account administration.
 - The example password is intentionally public and the stack must stay on
   localhost. Change `.env` values before any extended local evaluation.
-- Import runs within the API request and is limited to 2 MB / 5,000 records;
-  background ingestion is planned before larger datasets.
+- Interactive file import runs within the API request and is limited to 2 MB /
+  5,000 records. Authenticated webhook ingestion uses a background worker, but
+  throughput and failure recovery have not been benchmarked.
 - Search uses bounded relational matching, not a dedicated search engine.
 - The demo generator is deterministic but its timestamps are based on seed time.
-- No detections, alerts, incidents, collectors, anomaly models, or AI explanations
-  exist yet. Confidence is supplied evidence metadata, not an AI score.
+- Detection rules are a small, versioned, declarative demonstration set rather
+  than a complete detection library.
+- Alerts, vulnerability findings, and investigations use synthetic evidence and
+  are not proof of compromise or production monitoring.
+- The audit history is append-only through the application workflow, but it is
+  not cryptographically tamper-evident or an independently reviewed compliance
+  ledger.
+- No anomaly models or AI explanations exist yet. Confidence is supplied
+  evidence metadata, not an AI score.
 
-Version `0.0.1` is a development foundation, not a usable monitoring product.
+Version `0.3.0` is a local development prototype, not a usable monitoring or
+incident-response product.
 
 ## Product limitations
 
-- No authentication, organizations, roles, or authorization
-- No application database schema or migrations
-- No event ingestion, normalization, storage, or search
-- No detection rules, alerts, incidents, assets, or metrics
+- No production SSO, MFA, recovery, invitations, or role administration
+- No native vulnerability scanner, endpoint agent, prevention, or remediation
 - No anomaly models, AI explanations, reports, or notifications
 - No collector, syslog, SNMP, Windows agent, or Linux agent
 
 ## Security limitations
 
 - No independent security review or penetration test
-- No TLS termination, production secrets workflow, CSP, rate limiting, or WAF
+- A restrictive development CSP is present, but there is no TLS termination,
+  production secrets workflow, rate limiting, or WAF
 - Development credentials in `.env.example` are intentionally non-secret and
   must never be reused for a deployment
 - No public-internet deployment is supported
@@ -45,6 +53,7 @@ Version `0.0.1` is a development foundation, not a usable monitoring product.
 
 - Docker validation depends on the Docker CLI being accessible to the execution
   environment; any unavailable check is reported in the Phase 0 handoff
-- Browser end-to-end tests begin when the authenticated demo workflow exists
+- Frontend workflow tests run in a simulated browser environment; no independent
+  cross-browser or production end-to-end test suite exists
 
 Each limitation maps to a release item in the development roadmap.
