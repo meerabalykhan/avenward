@@ -15,7 +15,7 @@ dependencies = [
   "fastapi>=0.116,<1",
   "pydantic-settings>=2.10,<3",
   "python-multipart>=0.0.20,<1",
-  "redis>=6.2,<7",
+  "redis>=6.2,<9",
   "sqlalchemy[asyncio]>=2.0,<3",
   "uvicorn[standard]>=0.35,<1",
 ]
@@ -23,10 +23,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "httpx>=0.28,<1",
-  "mypy>=1.16,<2",
-  "pytest>=8.4,<9",
+  "mypy>=1.16,<3",
+  "pytest>=8.4,<10",
   "pytest-asyncio>=1.0,<2",
-  "pytest-cov>=6.2,<7",
+  "pytest-cov>=6.2,<8",
   "ruff>=0.12,<1",
 ]
 
