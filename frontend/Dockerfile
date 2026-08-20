@@ -13,7 +13,7 @@ FROM dependencies AS builder
 COPY frontend/ .
 RUN pnpm build
 
-FROM nginx:1.29-alpine AS runtime
+FROM nginx:1.30-alpine AS runtime
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 8080
